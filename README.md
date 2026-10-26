@@ -1,4 +1,4 @@
-# 文档转换工具（Word⇄PDF、Markdown→Word）
+# 文档转换工具（Word→PDF、Markdown→Word、PDF→图片）
 
 一个功能强大的文档转换工具，支持 Word 文档转 PDF（GUI/命令行），并新增 Markdown 转 Word（.docx）脚本。
 
@@ -110,3 +110,10 @@ python md_to_word.py docs/guide.md out/guide.docx
 
 ### v1.0
 - 基础单文件转换功能
+
+## PDF 转图片
+
+- [`pdf_to_images.py`](./pdf_to_images.py)：PDF 转图片脚本。
+- [`pdf_to_images_gui.py`](./pdf_to_images_gui.py)：图形界面入口。
+
+具体选项与依赖请参照脚本。
