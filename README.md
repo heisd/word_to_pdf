@@ -1,6 +1,6 @@
 # 文档转换工具（Word→PDF、Markdown→Word、PDF→图片）
 
-一个功能强大的文档转换工具，支持 Word 文档转 PDF（GUI/命令行），并新增 Markdown 转 Word（.docx）脚本。
+一个基于 Python 的文档转换工具，支持 Word 文档转 PDF（GUI/命令行），并新增 Markdown 转 Word（.docx）脚本。
 
 ## 功能特点
 
@@ -21,7 +21,7 @@
 pip install -r requirements.txt
 ```
 
-> 首次使用 Markdown→Word 功能时，工具会自动下载并安装 Pandoc（无需管理员权限）。
+> 首次使用 Markdown→Word 功能时，工具会尝试自动下载 Pandoc；网络或安装环境限制可能导致该步骤失败。
 
 ## 使用方法
 
@@ -117,3 +117,88 @@ python md_to_word.py docs/guide.md out/guide.docx
 - [`pdf_to_images_gui.py`](./pdf_to_images_gui.py)：图形界面入口。
 
 具体选项与依赖请参照脚本。
+
+## 脚本、依赖与适用平台
+
+| 脚本 | 功能 | 关键依赖 |
+| --- | --- | --- |
+| [word_pdf.py](./word_pdf.py) | Word→PDF，GUI/命令行 | Windows、Microsoft Word、pywin32 |
+| [md_to_word.py](./md_to_word.py) | Markdown→DOCX | pypandoc 与 Pandoc |
+| [pdf_to_images.py](./pdf_to_images.py) | PDF 每页导出图片 | PyMuPDF |
+| [pdf_to_images_gui.py](./pdf_to_images_gui.py) | PDF 导图界面 | PyMuPDF 与 Tk 图形环境 |
+
+统一 [requirements.txt](./requirements.txt) 包含 pywin32，因此整份依赖列表主要适用于 Windows。若仅在其他平台使用 Markdown 或 PDF 导图，可按所用脚本配置依赖；仓库没有给出完整跨平台测试矩阵。
+
+## 推荐安装流程
+
+以 Windows PowerShell 为例：
+
+```powershell
+git clone --branch main https://github.com/heisd/word_to_pdf.git
+cd word_to_pdf
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Word→PDF 通过 `Dispatch("Word.Application")` 调用本机 Word，并不是纯 Python 解析转换。安装 pywin32 不能替代安装 Microsoft Word。
+
+## PDF 导图：完整命令参数
+
+```text
+python pdf_to_images.py INPUT_PDF [OUTPUT_DIR] [png|jpg] [ZOOM] [PAGE_RANGE]
+```
+
+| 参数 | 默认行为 |
+| --- | --- |
+| INPUT_PDF | 必填，输入 PDF 文件 |
+| OUTPUT_DIR | 输入文件旁的“文件名_images”目录 |
+| 图片格式 | png |
+| ZOOM | 2.0，数值更大时像素尺寸与资源开销也更大 |
+| PAGE_RANGE | 全部页；也支持 1-5 或单页 3 |
+
+示例：
+
+```bash
+python pdf_to_images.py "input.pdf"
+python pdf_to_images.py "input.pdf" "out" png 2.0 1-5
+python pdf_to_images.py "input.pdf" "out" jpg 2.0 3
+```
+
+输出按原始页码命名，例如 `input_p1.png`；位数会随页范围调整。导图函数还定义了 JPEG 质量和透明背景相关参数，但当前命令行入口没有将它们全部暴露为选项。
+
+图形界面入口：
+
+```bash
+python pdf_to_images_gui.py
+```
+
+界面可选择输入、输出目录、PNG/JPG、缩放和页范围。PDF 导图是把页面渲染为图片，不是 OCR 或文字提取。
+
+## Markdown 输出说明
+
+`md_to_word.py` 默认将输入同名文件扩展名替换为 `.docx`，也可以指定输出位置。脚本会创建缺失的输出目录，并传入三级目录等 Pandoc 参数。
+
+```bash
+python md_to_word.py "notes.md" "out/notes.docx"
+```
+
+复杂表格、特殊字体与自定义样式仍需在 Word 中检查。Pandoc 可用性、Markdown 转换与 Word→PDF 是三套不同前提，应分别排查。
+
+## 日志与故障定位
+
+| 日志 | 对应功能 |
+| --- | --- |
+| word_to_pdf.log | Word→PDF |
+| md_to_word.log | Markdown→DOCX |
+| pdf_to_images.log | PDF→图片 |
+
+日志位于进程当前工作目录。建议从仓库根目录运行，路径含空格时在命令行使用引号。
+
+- **Word COM 无法初始化**：先确认本机 Word 可正常打开、所用环境为 Windows，再检查 pywin32。
+- **Pandoc 下载失败**：检查网络和本机 Pandoc 可用性；脚本会尝试下载，不保证所有环境自动安装成功。
+- **找不到 fitz**：安装的是 PyMuPDF，导入名才是 fitz。
+- **导图占用过高**：先减小缩放倍数或缩小页范围。
+- **输出不符合预期**：先用单页/单文件确认格式、目录与页面，再进行大批量转换。
+
+重复转换时应检查目标位置，避免把同名输出误当成另一次结果。
